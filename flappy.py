@@ -35,6 +35,12 @@ PLAYERS_LIST = (
         'assets/sprites/yellowbird-midflap.png',
         'assets/sprites/yellowbird-downflap.png',
     ),
+    #white
+    (
+        'assets/sprites/whitebird-upflap.png',
+        'assets/sprites/whitebird-midflap.png',
+        'assets/sprites/whitebird-downflap.png',
+    ),
 )
 
 # list of backgrounds
