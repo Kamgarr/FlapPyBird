@@ -118,7 +118,6 @@ def main():
         pygame.image.load('assets/sprites/9.png').convert_alpha()
     )
 
-
     # message sprite for welcome screen
     IMAGES['message'] = pygame.image.load('assets/sprites/message.png').convert_alpha()
     # base (ground) sprite
@@ -168,13 +167,15 @@ def main():
     generation = 0
     population_size = 10
 
-    #create network
-    net = network([SCREENWIDTH, SCREENHEIGHT, 3], "")  # TODO: define net here
-    #create population of weights
+    # TODO Neural net and evolution definition
+    # create network
+    net = network([SCREENWIDTH, SCREENHEIGHT, 1], "P-4-4,CR-2-16-1,CR-2-16-2,P-2-2,CR-2-3-2,F,DR-256,D-1")
+    # create population of weights
     evolve = evolution(0.1, 0.3)
-    population = []
+
+    population = np.ndarray(shape=(population_size, net.weight_size), dtype=float)
     for i in range(0, population_size):
-        population.append(np.random.uniform(-1, 1, net.weight_size))
+        population[i] = np.random.uniform(-1, 1, net.weight_size)
 
     while True:
         for i in range(0, population_size):
@@ -225,8 +226,10 @@ def mainGame(birds, generation, network, weights):
         for bird in birds:
             if not bird.active:
                 continue
-
-            jump = network(SCREEN.get_view('3'), weights)
+            # TODO call neural net here
+            rgb = np.array(SCREEN.get_view('3'))
+            gray_scale = np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
+            jump = network(gray_scale, weights)
 
             if not bird.update(score, upperPipes, lowerPipes, jump):
                 active_birds -= 1
@@ -265,7 +268,6 @@ def mainGame(birds, generation, network, weights):
             if (bird.active):
                 playerSurface = pygame.transform.rotate(bird.images[bird.image], bird.rotation)
                 SCREEN.blit(playerSurface, (bird.x, bird.y))
-
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
@@ -322,6 +324,8 @@ def checkCrash(bird, upperPipes, lowerPipes):
 
     # if player crashes into ground
     if player['y'] + player['h'] >= BASEY - 1:
+        return [True, True]
+    elif player['y'] + player['h'] <= 0:
         return [True, True]
     else:
 
