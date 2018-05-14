@@ -1,6 +1,9 @@
 from itertools import cycle
 import random
 import sys
+import numpy as np
+from neural_net import network
+from evolution import evolution
 
 import pygame
 from pygame.locals import *
@@ -16,32 +19,7 @@ IMAGES, SOUNDS, HITMASKS = {}, {}, {}
 
 # list of all possible players (tuple of 3 positions of flap)
 PLAYERS_LIST = (
-    # red bird
-    (
-        'assets/sprites/redbird-upflap.png',
-        'assets/sprites/redbird-midflap.png',
-        'assets/sprites/redbird-downflap.png',
-    ),
-    # blue bird
-    (
-        # amount by which base can maximum shift to left
-        'assets/sprites/bluebird-upflap.png',
-        'assets/sprites/bluebird-midflap.png',
-        'assets/sprites/bluebird-downflap.png',
-    ),
-    # yellow bird
-    (
-        'assets/sprites/yellowbird-upflap.png',
-        'assets/sprites/yellowbird-midflap.png',
-        'assets/sprites/yellowbird-downflap.png',
-    ),
-    #white
-    (
-        'assets/sprites/whitebird-upflap.png',
-        'assets/sprites/whitebird-midflap.png',
-        'assets/sprites/whitebird-downflap.png',
-    ),
-    #purple
+    # purple
     (
         'assets/sprites/purplebird-upflap.png',
         'assets/sprites/purplebird-midflap.png',
@@ -51,20 +29,13 @@ PLAYERS_LIST = (
 
 # list of backgrounds
 BACKGROUNDS_LIST = (
-    'assets/sprites/background-day.png',
-    'assets/sprites/background-night.png',
+    'assets/sprites/background-white.png',
 )
 
 # list of pipes
 PIPES_LIST = (
-    'assets/sprites/pipe-green.png',
     'assets/sprites/pipe-red.png',
 )
-
-try:
-    xrange
-except NameError:
-    xrange = range
 
 
 class bird:
@@ -91,11 +62,7 @@ class bird:
         self.y = y
         self.images = images
 
-    def update(self, score, upperPipes, lowerPipes):
-        flapped = False
-
-        if random.randint(0, 100) < 5:  # TODO use birds NN
-            flapped = True
+    def update(self, score, upperPipes, lowerPipes, flapped):
 
         # check for crash here
         crashTest = checkCrash(self, upperPipes, lowerPipes)
@@ -151,79 +118,73 @@ def main():
         pygame.image.load('assets/sprites/9.png').convert_alpha()
     )
 
-    # game over sprite
-    IMAGES['gameover'] = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
+
     # message sprite for welcome screen
     IMAGES['message'] = pygame.image.load('assets/sprites/message.png').convert_alpha()
     # base (ground) sprite
-    IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
+    IMAGES['base'] = pygame.image.load('assets/sprites/base_green.png').convert_alpha()
 
-    # sounds
-    if 'win' in sys.platform:
-        soundExt = '.wav'
-    else:
-        soundExt = '.ogg'
+    IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[0]).convert()
 
-    SOUNDS['die'] = pygame.mixer.Sound('assets/audio/die' + soundExt)
-    SOUNDS['hit'] = pygame.mixer.Sound('assets/audio/hit' + soundExt)
-    SOUNDS['point'] = pygame.mixer.Sound('assets/audio/point' + soundExt)
-    SOUNDS['swoosh'] = pygame.mixer.Sound('assets/audio/swoosh' + soundExt)
-    SOUNDS['wing'] = pygame.mixer.Sound('assets/audio/wing' + soundExt)
+    # select random player sprites
+    randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
+    IMAGES['player'] = (
+        pygame.image.load(PLAYERS_LIST[randPlayer][0]).convert_alpha(),
+        pygame.image.load(PLAYERS_LIST[randPlayer][1]).convert_alpha(),
+        pygame.image.load(PLAYERS_LIST[randPlayer][2]).convert_alpha(),
+    )
+
+    player_img = []
+    for i in range(0, len(PLAYERS_LIST)):
+        player_img.append((
+            pygame.image.load(PLAYERS_LIST[i][0]).convert_alpha(),
+            pygame.image.load(PLAYERS_LIST[i][1]).convert_alpha(),
+            pygame.image.load(PLAYERS_LIST[i][2]).convert_alpha(),
+        ))
+
+    # select random pipe sprites
+    pipeindex = random.randint(0, len(PIPES_LIST) - 1)
+    IMAGES['pipe'] = (
+        pygame.transform.rotate(
+            pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(), 180),
+        pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(),
+    )
+
+    # hismask for pipes
+    HITMASKS['pipe'] = (
+        getHitmask(IMAGES['pipe'][0]),
+        getHitmask(IMAGES['pipe'][1]),
+    )
+
+    # hitmask for player
+    HITMASKS['player'] = (
+        getHitmask(IMAGES['player'][0]),
+        getHitmask(IMAGES['player'][1]),
+        getHitmask(IMAGES['player'][2]),
+    )
+
+    startx, starty = int(SCREENWIDTH * 0.2), int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
 
     generation = 0
+    population_size = 10
+
+    #create network
+    net = network([SCREENWIDTH, SCREENHEIGHT, 3], "")  # TODO: define net here
+    #create population of weights
+    evolve = evolution(0.1, 0.3)
+    population = []
+    for i in range(0, population_size):
+        population.append(np.random.uniform(-1, 1, net.weight_size))
+
     while True:
-        # select random background sprites
-        randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
-        IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[randBg]).convert()
-
-        # select random player sprites
-        randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
-        IMAGES['player'] = (
-            pygame.image.load(PLAYERS_LIST[randPlayer][0]).convert_alpha(),
-            pygame.image.load(PLAYERS_LIST[randPlayer][1]).convert_alpha(),
-            pygame.image.load(PLAYERS_LIST[randPlayer][2]).convert_alpha(),
-        )
-        player_img = []
-        for i in range(0, len(PLAYERS_LIST)):
-            player_img.append((
-                pygame.image.load(PLAYERS_LIST[i][0]).convert_alpha(),
-                pygame.image.load(PLAYERS_LIST[i][1]).convert_alpha(),
-                pygame.image.load(PLAYERS_LIST[i][2]).convert_alpha(),
-            ))
-
-        # select random pipe sprites
-        pipeindex = random.randint(0, len(PIPES_LIST) - 1)
-        IMAGES['pipe'] = (
-            pygame.transform.rotate(
-                pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(), 180),
-            pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(),
-        )
-
-        # hismask for pipes
-        HITMASKS['pipe'] = (
-            getHitmask(IMAGES['pipe'][0]),
-            getHitmask(IMAGES['pipe'][1]),
-        )
-
-        # hitmask for player
-        HITMASKS['player'] = (
-            getHitmask(IMAGES['player'][0]),
-            getHitmask(IMAGES['player'][1]),
-            getHitmask(IMAGES['player'][2]),
-        )
-
-        startx, starty = int(SCREENWIDTH * 0.2), int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
-
-        birds = []
-        for i in range(0, generation + 1):
-            birds.append(bird(id=i, x=startx, y=starty, images=player_img[i % len(player_img)]))
-
-        # TODO loop evolution around this call
-        mainGame(birds, generation)
+        for i in range(0, population_size):
+            b = bird(id=i, x=startx, y=starty, images=player_img[0])
+            mainGame([b], generation, net, population[i])
+        population = evolve(population)
         generation += 1
 
 
-def mainGame(birds, generation):
+def mainGame(birds, generation, network, weights):
     score = loopIter = 0
     playerIndexGen = birds[0].indexGen
 
@@ -265,7 +226,9 @@ def mainGame(birds, generation):
             if not bird.active:
                 continue
 
-            if not bird.update(score, upperPipes, lowerPipes):
+            jump = network(SCREEN.get_view('3'), weights)
+
+            if not bird.update(score, upperPipes, lowerPipes, jump):
                 active_birds -= 1
                 print("Generation: ", generation, "  bird: ", bird.id, "  score: ", score)
 
@@ -295,7 +258,8 @@ def mainGame(birds, generation):
         basex = -((-basex + 100) % baseShift)
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
-        showScore(score)
+        # showScore(score)
+        pygame.display.set_caption("Flappy Bird, score: " + str(score))
 
         for bird in birds:
             if (bird.active):
@@ -396,8 +360,8 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
     x1, y1 = rect.x - rect1.x, rect.y - rect1.y
     x2, y2 = rect.x - rect2.x, rect.y - rect2.y
 
-    for x in xrange(rect.width):
-        for y in xrange(rect.height):
+    for x in range(rect.width):
+        for y in range(rect.height):
             if hitmask1[x1 + x][y1 + y] and hitmask2[x2 + x][y2 + y]:
                 return True
     return False
@@ -406,9 +370,9 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
 def getHitmask(image):
     """returns a hitmask using an image's alpha."""
     mask = []
-    for x in xrange(image.get_width()):
+    for x in range(image.get_width()):
         mask.append([])
-        for y in xrange(image.get_height()):
+        for y in range(image.get_height()):
             mask[x].append(bool(image.get_at((x, y))[3]))
     return mask
 
