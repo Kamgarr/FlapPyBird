@@ -8,13 +8,26 @@ class conv2d:
         self.stride = stride
         self.filters = filters
         self.activation = activation
-        # self.out_shape = [input_shape[0] // stride, input_shape[1] // stride]
-        self.out_shape = input_shape
-        self.weight_size = self.out_shape[0] * self.out_shape[1] * kernel * kernel * filters
+        self.out_shape = [input_shape[0] // stride, input_shape[1] // stride, filters]
+        if len(input_shape) < 3:
+            self.weight_size = kernel * kernel * filters
+        else:
+            self.weight_size = kernel * kernel * filters * input_shape[2]
 
     def __call__(self, input, weights):
-        return input
-    # TODO conv2d layer
+        output = np.ndarray(shape=(self.out_shape[0], self.out_shape[1], self.filters), dtype=float)
+        pos = 0
+
+        for f in range(0, self.filters):
+            filter = weights[pos:pos + self.kernel * self.kernel]
+            for i in range(0, self.out_shape[0]):
+                for j in range(0, self.out_shape[1]):
+                    input_sub = input[i * self.stride:i * self.stride + self.kernel,
+                                           j * self.stride:j * self.stride + self.kernel].flatten()
+                    if len(input_sub) == len(filter):
+                        output[i][j][f] = np.dot(input_sub, filter)
+            pos += self.kernel * self.kernel
+        return output
 
 
 class maxPool2d:
@@ -75,9 +88,9 @@ class network:
         self.layers = []
         for i in range(0, len(layer_args)):
             if layer_args[i][0] == "C":
-                layer = conv2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]), int(layer_args[i][2]))
+                layer = conv2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]), int(layer_args[i][3]))
             elif layer_args[i][0] == "CR":
-                layer = conv2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]), int(layer_args[i][2]), relu)
+                layer = conv2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]), int(layer_args[i][3]), relu)
             elif layer_args[i][0] == 'P':
                 layer = maxPool2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]))
             elif layer_args[i][0] == 'D':

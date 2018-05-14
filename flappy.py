@@ -169,7 +169,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([SCREENWIDTH, SCREENHEIGHT, 1], "P-4-4,CR-2-16-1,CR-2-16-2,P-2-2,CR-2-3-2,F,DR-256,D-1")
+    net = network([SCREENWIDTH, SCREENHEIGHT, 1], "P-16-8,CR-2-64-2,CR-2-32-2,P-2-2,CR-2-3-2,F,DR-32,D-1")
     # create population of weights
     evolve = evolution(0.1, 0.3)
 
