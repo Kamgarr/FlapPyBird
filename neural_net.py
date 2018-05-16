@@ -9,17 +9,18 @@ class conv2d:
         self.filters = filters
         self.activation = activation
         self.out_shape = [input_shape[0] // stride, input_shape[1] // stride, filters]
-        if len(input_shape) < 3:
-            self.weight_size = kernel * kernel * filters
-        else:
-            self.weight_size = kernel * kernel * filters * input_shape[2]
+        self.filter_size = kernel * kernel
+        if len(input_shape) > 2:
+            self.filter_size *= input_shape[2]
+        self.weight_size = self.filter_size * filters
+
 
     def __call__(self, input, weights):
         output = np.ndarray(shape=(self.out_shape[0], self.out_shape[1], self.filters), dtype=float)
         pos = 0
 
         for f in range(0, self.filters):
-            filter = weights[pos:pos + self.kernel * self.kernel]
+            filter = weights[pos:pos + self.filter_size]
             for i in range(0, self.out_shape[0]):
                 for j in range(0, self.out_shape[1]):
                     input_sub = input[i * self.stride:i * self.stride + self.kernel,
