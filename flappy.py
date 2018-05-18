@@ -177,11 +177,13 @@ def main():
     for i in range(0, population_size):
         population[i] = np.random.uniform(-1, 1, net.weight_size)
 
+    fitness = []
     while True:
         for i in range(0, population_size):
             b = bird(id=i, x=startx, y=starty, images=player_img[0])
             mainGame([b], generation, net, population[i])
-        population = evolve(population)
+            fitness.append(b.score)
+        population = evolve(population, fitness)
         generation += 1
 
 
