@@ -2,13 +2,13 @@ from itertools import cycle
 import random
 import sys
 import numpy as np
-from neural_net import network
+from torch_net import network
 from evolution import evolution
 
 import pygame
 from pygame.locals import *
 
-FPS = 30
+FPS = 300
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -169,7 +169,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([SCREENWIDTH, SCREENHEIGHT, 1], "P-16-8,CR-2-64-2,CR-2-32-2,P-2-2,CR-2-3-2,F,DR-32,D-1")
+    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-2,R,C-2-32-2,R,P-2-2,C-2-3-2,R,F,D-32,R,D-2")
     # create population of weights
     evolve = evolution(0.1, 0.3)
 
@@ -229,7 +229,7 @@ def mainGame(birds, generation, network, weights):
             # TODO call neural net here
             rgb = np.array(SCREEN.get_view('3'))
             gray_scale = np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
-            jump = network(gray_scale, weights)
+            jump = network(np.expand_dims(gray_scale, 0), weights)
 
             if not bird.update(score, upperPipes, lowerPipes, jump):
                 active_birds -= 1
