@@ -77,6 +77,15 @@ class relu:
     def __call__(self, input, _):
         return torch.nn.functional.relu(input).cuda()
 
+class tanh:
+    def __init__(self, input_shape):
+        self.weight_size = 0
+        self.out_shape = input_shape
+        print("Tanh\non", input_shape,"\n")
+
+    def __call__(self, input, _):
+        return torch.nn.functional.tanh(input).cuda()
+
 def argmax(input):
     values, indices = input.max(1)
     return indices.cpu().numpy()[0]
@@ -99,6 +108,8 @@ class network:
                 layer = dense(last_shape, int(layer_args[i][1]))
             elif layer_args[i][0] == 'R':
                 layer = relu(last_shape)
+            elif layer_args[i][0] == 'T':
+                layer = tanh(last_shape)
             elif layer_args[i][0] == 'F':
                 layer = flatten(last_shape)
 

@@ -8,7 +8,8 @@ from evolution import evolution
 import pygame
 from pygame.locals import *
 
-POP_SIZE = 500
+
+POP_SIZE = 100
 GENS = 100
 ELITE_SIZE = 10
 TOURNAMENT_SIZE = 5
@@ -16,7 +17,7 @@ CROSS_OVER_PROB = 0.5
 MUT_PROB = 0.9
 MUT_PER_BIT = 0.01
 
-FPS = 300
+FPS = 500
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -176,7 +177,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-2,R,C-2-32-2,R,P-2-2,C-2-3-2,R,F,D-32,R,D-2")
+    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-1,T,C-2-32-2,T,P-2-2,C-2-3-2,T,F,D-32,R,D-2")
     # create population of weights
     evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
 
@@ -192,7 +193,8 @@ def main():
             fitness.append(b.score)
         population = evolve(population, np.array(fitness))
         generation += 1
-
+        np.savetxt("weights/gen_" + str(generation), population)
+        np.savetxt("weights/gen_" + str(generation) + "_best", evolve.best)
 
 def mainGame(birds, generation, network, weights):
     score = loopIter = 0
@@ -271,13 +273,13 @@ def mainGame(birds, generation, network, weights):
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
         # showScore(score)
-        pygame.display.set_caption("Flappy Bird, score: " + str(score))
+        #pygame.display.set_caption("Flappy Bird, score: " + str(score))
 
         for bird in birds:
             if (bird.active):
                 playerSurface = pygame.transform.rotate(bird.images[bird.image], bird.rotation)
                 SCREEN.blit(playerSurface, (bird.x, bird.y))
-        pygame.display.update()
+        #pygame.display.update()
         FPSCLOCK.tick(FPS)
 
 
@@ -334,7 +336,7 @@ def checkCrash(bird, upperPipes, lowerPipes):
     # if player crashes into ground
     if player['y'] + player['h'] >= BASEY - 1:
         return [True, True]
-    elif player['y'] + player['h'] <= 0:
+    elif player['y'] + player['h'] <= -5:
         return [True, True]
     else:
 
