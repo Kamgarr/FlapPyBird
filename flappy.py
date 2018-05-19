@@ -8,12 +8,12 @@ from evolution import evolution
 import pygame
 from pygame.locals import *
 
-POP_SIZE = 500
+POP_SIZE = 50
 GENS = 100
 ELITE_SIZE = 10
-CROSS_OVER_PROB = 0,5
+CROSS_OVER_PROB = 0.5
 MUT_PROB = 0.9
-MUT_PER_BIT = 0.0
+MUT_PER_BIT = 0.01
 
 FPS = 300
 SCREENWIDTH = 288
