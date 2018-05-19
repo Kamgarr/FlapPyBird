@@ -48,3 +48,4 @@ class evolution:
             for i in range(len(element)):
                 if np.random.rand() < self.mut_per_bit:
                     element[i] = (np.random.rand() * 2) - 1
+        return element
