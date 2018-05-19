@@ -2,22 +2,25 @@ import numpy as np
 
 
 class evolution:
-    def __init__(self, mut_prop, mut_per_bit, cross_prop, elite):
+    def __init__(self, mut_prop, mut_per_bit, cross_prop, elite, tournament_size):
         self.mut_prob = mut_prop
         self.mut_per_bit = mut_per_bit
         self.cross_prob = cross_prop
+        self.tournament_size = tournament_size
         self.elite = elite
 
     def __call__(self, last_gen, fitness):
-        total_fitness = np.sum(fitness)
-        pop_probabilities = [f / total_fitness for f in fitness]
-
         new_gen = last_gen.copy()
-        o_indices = np.array(pop_probabilities).argsort()[-self.elite:]
+        o_indices = np.array(fitness).argsort()[-self.elite:]
         new_gen[range(self.elite), :] = last_gen[o_indices, :]
 
         for i in range(self.elite, len(last_gen), 2):
-            o_indices = np.random.choice(range(len(last_gen)), 2, p=pop_probabilities)
+            random_tournament = np.random.randint(0, len(last_gen), 5)
+
+            tournament_fitness = fitness[random_tournament]
+            tournament_indices = np.array(tournament_fitness).argsort()[-2:]
+
+            o_indices = random_tournament[tournament_indices]
             o_1, o_2 = last_gen[o_indices, :]
 
             # Crossover

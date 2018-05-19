@@ -8,9 +8,10 @@ from evolution import evolution
 import pygame
 from pygame.locals import *
 
-POP_SIZE = 50
+POP_SIZE = 500
 GENS = 100
-ELITE_SIZE = 10
+ELITE_SIZE = 2
+TOURNAMENT_SIZE = 5
 CROSS_OVER_PROB = 0.5
 MUT_PROB = 0.9
 MUT_PER_BIT = 0.01
@@ -177,7 +178,7 @@ def main():
     # create network
     net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-2,R,C-2-32-2,R,P-2-2,C-2-3-2,R,F,D-32,R,D-2")
     # create population of weights
-    evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE)
+    evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
 
     population = np.ndarray(shape=(POP_SIZE, net.weight_size), dtype=float)
     for i in range(0, POP_SIZE):
@@ -189,7 +190,7 @@ def main():
             b = bird(id=i, x=startx, y=starty, images=player_img[0])
             mainGame([b], generation, net, population[i])
             fitness.append(b.score)
-        population = evolve(population, fitness)
+        population = evolve(population, np.array(fitness))
         generation += 1
 
 
