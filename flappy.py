@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from torch_net import network
 from evolution import evolution
+import argparse
 
 import pygame
 from pygame.locals import *
@@ -107,6 +108,12 @@ class bird:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save_folder", default="weights", type=str, help="Save folder.")
+    parser.add_argument("--resume", default=None, type=str, help="Weight file")
+    parser.add_argument("--show_one", default=None, type=str, help="Weight file")
+    args = parser.parse_args()
+
     global SCREEN, FPSCLOCK
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -178,23 +185,31 @@ def main():
     # TODO Neural net and evolution definition
     # create network
     net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-1,T,C-2-32-2,T,P-2-2,C-2-3-2,T,F,D-32,R,D-2")
-    # create population of weights
-    evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
 
-    population = np.ndarray(shape=(POP_SIZE, net.weight_size), dtype=float)
-    for i in range(0, POP_SIZE):
-        population[i] = np.random.uniform(-1, 1, net.weight_size)
+    if args.show_one:
+        global FPS
+        FPS = 30
+        b = bird(id=i, x=startx, y=starty, images=player_img[0])
+        mainGame([b], 0, net, np.loadtxt(args.show_one))
+    else:
+        # create population of weights
+        evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
 
-    while True:
-        fitness = []
-        for i in range(0, POP_SIZE):
-            b = bird(id=i, x=startx, y=starty, images=player_img[0])
-            mainGame([b], generation, net, population[i])
-            fitness.append(b.score)
-        population = evolve(population, np.array(fitness))
-        generation += 1
-        np.savetxt("weights/gen_" + str(generation), population)
-        np.savetxt("weights/gen_" + str(generation) + "_best", evolve.best)
+        if args.resume:
+            population = np.loadtxt(args.resume)
+        else:
+            population = np.random.uniform(-1, 1, (POP_SIZE, net.weight_size)).reshape((POP_SIZE, net.weight_size))
+
+        while True:
+            fitness = []
+            for i in range(0, POP_SIZE):
+                b = bird(id=i, x=startx, y=starty, images=player_img[0])
+                mainGame([b], generation, net, population[i])
+                fitness.append(b.score)
+            population = evolve(population, np.array(fitness))
+            generation += 1
+            np.savetxt(args.save_folder + "/gen_" + str(generation), population)
+            np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
 def mainGame(birds, generation, network, weights):
     score = loopIter = 0
