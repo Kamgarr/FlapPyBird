@@ -7,16 +7,18 @@ class evolution:
         self.mut_per_bit = mut_per_bit
         self.cross_prob = cross_prop
         self.tournament_size = tournament_size
-        self.elite = elite
+        self.elite_size = elite
+        self.elite = None
         self.best = None
 
     def __call__(self, last_gen, fitness):
         new_gen = last_gen.copy()
-        o_indices = np.array(fitness).argsort()[-self.elite:]
-        new_gen[range(self.elite), :] = last_gen[o_indices, :]
-        self.best = new_gen[self.elite-1]
+        o_indices = np.array(fitness).argsort()[-self.elite_size:]
+        new_gen[range(self.elite_size), :] = last_gen[o_indices, :]
+        self.best = new_gen[self.elite_size - 1]
+        self.elite = new_gen[:self.elite_size]
 
-        for i in range(self.elite, len(last_gen), 2):
+        for i in range(self.elite_size, len(last_gen), 2):
             random_tournament = np.random.randint(0, len(last_gen), 5)
 
             tournament_fitness = fitness[random_tournament]
@@ -40,8 +42,7 @@ class evolution:
     def _crossover(self, first, second):
         if np.random.rand() < self.cross_prob:
             index = np.random.randint(0, len(first))
-            for i in range(index, len(first)):
-                first[i], second[i] = second[i], first[i]
+            first[index:], second[index:] = second[index:], first[index:]
 
         return first, second
 

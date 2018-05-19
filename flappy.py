@@ -184,7 +184,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-1,T,C-2-32-2,T,P-2-2,C-2-3-2,T,F,D-32,R,D-2")
+    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-16-1,T,C-2-16-2,T,P-2-2,C-2-8-2,T,F,D-64,R,D-2")
 
     if args.show_one:
         global FPS
@@ -196,7 +196,9 @@ def main():
         evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
 
         if args.resume:
-            population = np.loadtxt(args.resume)
+            elite = np.loadtxt(args.resume)
+            new = np.random.uniform(-1, 1, (POP_SIZE-ELITE_SIZE, net.weight_size)).reshape((POP_SIZE-ELITE_SIZE, net.weight_size))
+            population = np.append(elite, new, axis=0)
         else:
             population = np.random.uniform(-1, 1, (POP_SIZE, net.weight_size)).reshape((POP_SIZE, net.weight_size))
 
@@ -208,7 +210,7 @@ def main():
                 fitness.append(b.score)
             population = evolve(population, np.array(fitness))
             generation += 1
-            np.savetxt(args.save_folder + "/gen_" + str(generation), population)
+            np.savetxt(args.save_folder + "/gen_" + str(generation), evolve.elite)
             np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
 def mainGame(birds, generation, network, weights):
