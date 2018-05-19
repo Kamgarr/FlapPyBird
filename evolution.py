@@ -8,11 +8,13 @@ class evolution:
         self.cross_prob = cross_prop
         self.tournament_size = tournament_size
         self.elite = elite
+        self.best = None
 
     def __call__(self, last_gen, fitness):
         new_gen = last_gen.copy()
         o_indices = np.array(fitness).argsort()[-self.elite:]
         new_gen[range(self.elite), :] = last_gen[o_indices, :]
+        self.best = new_gen[len(self.elite)-1]
 
         for i in range(self.elite, len(last_gen), 2):
             random_tournament = np.random.randint(0, len(last_gen), 5)
@@ -48,3 +50,4 @@ class evolution:
             for i in range(len(element)):
                 if np.random.rand() < self.mut_per_bit:
                     element[i] = (np.random.rand() * 2) - 1
+        return element

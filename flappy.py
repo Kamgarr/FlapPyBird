@@ -273,13 +273,13 @@ def mainGame(birds, generation, network, weights):
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
         # showScore(score)
-        #pygame.display.set_caption("Flappy Bird, score: " + str(score))
+        pygame.display.set_caption("Flappy Bird, score: " + str(score))
 
         for bird in birds:
             if (bird.active):
                 playerSurface = pygame.transform.rotate(bird.images[bird.image], bird.rotation)
                 SCREEN.blit(playerSurface, (bird.x, bird.y))
-        #pygame.display.update()
+        pygame.display.update()
         FPSCLOCK.tick(FPS)
 
 
