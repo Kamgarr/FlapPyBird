@@ -10,7 +10,7 @@ from pygame.locals import *
 
 POP_SIZE = 500
 GENS = 100
-ELITE_SIZE = 2
+ELITE_SIZE = 10
 TOURNAMENT_SIZE = 5
 CROSS_OVER_PROB = 0.5
 MUT_PROB = 0.9
