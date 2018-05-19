@@ -14,7 +14,7 @@ class evolution:
         new_gen = last_gen.copy()
         o_indices = np.array(fitness).argsort()[-self.elite:]
         new_gen[range(self.elite), :] = last_gen[o_indices, :]
-        self.best = new_gen[len(self.elite)-1]
+        self.best = new_gen[self.elite-1]
 
         for i in range(self.elite, len(last_gen), 2):
             random_tournament = np.random.randint(0, len(last_gen), 5)
