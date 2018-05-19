@@ -8,6 +8,13 @@ from evolution import evolution
 import pygame
 from pygame.locals import *
 
+POP_SIZE = 500
+GENS = 100
+ELITE_SIZE = 10
+CROSS_OVER_PROB = 0,5
+MUT_PROB = 0.9
+MUT_PER_BIT = 0.0
+
 FPS = 300
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
@@ -165,21 +172,20 @@ def main():
     startx, starty = int(SCREENWIDTH * 0.2), int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
 
     generation = 0
-    population_size = 10
 
     # TODO Neural net and evolution definition
     # create network
     net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-8-4,C-2-64-2,R,C-2-32-2,R,P-2-2,C-2-3-2,R,F,D-32,R,D-2")
     # create population of weights
-    evolve = evolution(0.1, 0.3)
+    evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE)
 
-    population = np.ndarray(shape=(population_size, net.weight_size), dtype=float)
-    for i in range(0, population_size):
+    population = np.ndarray(shape=(POP_SIZE, net.weight_size), dtype=float)
+    for i in range(0, POP_SIZE):
         population[i] = np.random.uniform(-1, 1, net.weight_size)
 
-    fitness = []
     while True:
-        for i in range(0, population_size):
+        fitness = []
+        for i in range(0, POP_SIZE):
             b = bird(id=i, x=startx, y=starty, images=player_img[0])
             mainGame([b], generation, net, population[i])
             fitness.append(b.score)
