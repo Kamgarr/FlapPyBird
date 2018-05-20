@@ -9,14 +9,16 @@ import argparse
 import pygame
 from pygame.locals import *
 
-
 POP_SIZE = 100
 GENS = 100
 ELITE_SIZE = 10
 TOURNAMENT_SIZE = 5
-CROSS_OVER_PROB = 0.5
+CROSS_OVER_PROB = 0.1
 MUT_PROB = 0.9
 MUT_PER_BIT = 0.01
+
+UP_PIPE_LIMIT = 300
+DOWN_PIPE_LIMIT = 150
 
 FPS = 500
 SCREENWIDTH = 288
@@ -197,7 +199,8 @@ def main():
 
         if args.resume:
             elite = np.loadtxt(args.resume)
-            new = np.random.uniform(-1, 1, (POP_SIZE-ELITE_SIZE, net.weight_size)).reshape((POP_SIZE-ELITE_SIZE, net.weight_size))
+            new = np.random.uniform(-1, 1, (POP_SIZE - ELITE_SIZE, net.weight_size)).reshape(
+                (POP_SIZE - ELITE_SIZE, net.weight_size))
             population = np.append(elite, new, axis=0)
         else:
             population = np.random.uniform(-1, 1, (POP_SIZE, net.weight_size)).reshape((POP_SIZE, net.weight_size))
@@ -213,6 +216,7 @@ def main():
             np.savetxt(args.save_folder + "/gen_" + str(generation), evolve.elite)
             np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
+
 def mainGame(birds, generation, network, weights):
     score = loopIter = 0
     playerIndexGen = birds[0].indexGen
@@ -221,8 +225,8 @@ def mainGame(birds, generation, network, weights):
     baseShift = IMAGES['base'].get_width() - IMAGES['background'].get_width()
 
     # get 2 new pipes to add to upperPipes lowerPipes list
-    newPipe1 = getRandomPipe()
-    newPipe2 = getRandomPipe()
+    newPipe1 = getRandomPipe(score)
+    newPipe2 = getRandomPipe(score)
 
     # list of upper pipes
     upperPipes = [
@@ -270,7 +274,7 @@ def mainGame(birds, generation, network, weights):
 
         # add new pipe when first pipe is about to touch left of screen
         if 0 < upperPipes[0]['x'] < 5:
-            newPipe = getRandomPipe()
+            newPipe = getRandomPipe(score)
             upperPipes.append(newPipe[0])
             lowerPipes.append(newPipe[1])
 
@@ -311,7 +315,7 @@ def playerShm(playerShm):
         playerShm['val'] -= 1
 
 
-def getRandomPipe():
+def getRandomPipe(score):
     """returns a randomly generated pipe"""
     # y of gap between upper and lower pipe
     gapY = random.randrange(0, int(BASEY * 0.6 - PIPEGAPSIZE))
@@ -319,9 +323,12 @@ def getRandomPipe():
     pipeHeight = IMAGES['pipe'][0].get_height()
     pipeX = SCREENWIDTH + 10
 
+    upper_pipeY = gapY - pipeHeight if score > UP_PIPE_LIMIT else -pipeHeight
+    lower_pipeY = gapY + PIPEGAPSIZE if score > DOWN_PIPE_LIMIT else SCREENHEIGHT
+
     return [
-        {'x': pipeX, 'y': gapY - pipeHeight},  # upper pipe
-        {'x': pipeX, 'y': gapY + PIPEGAPSIZE},  # lower pipe
+        {'x': pipeX, 'y': upper_pipeY},  # upper pipe
+        {'x': pipeX, 'y': lower_pipeY},  # lower pipe
     ]
 
 
