@@ -11,14 +11,15 @@ from pygame.locals import *
 
 POP_SIZE = 100
 GENS = 100
-ELITE_SIZE = 10
+ELITE_SIZE = 30
 TOURNAMENT_SIZE = 5
-CROSS_OVER_PROB = 0.1
-MUT_PROB = 0.9
+CROSS_OVER_PROB = 0.2
+MUT_PROB = 0.8
 MUT_PER_BIT = 0.01
 
-UP_PIPE_LIMIT = 300
-DOWN_PIPE_LIMIT = 150
+UP_PIPE_LIMIT = 200
+DOWN_PIPE_LIMIT = 100
+BOTH_PIPES_LIMIT = 300
 
 FPS = 500
 SCREENWIDTH = 288
@@ -186,7 +187,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-16-1,T,C-2-16-2,T,P-2-2,C-2-8-2,T,F,D-64,R,D-2")
+    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-4-1,T,C-2-4-2,T,P-2-2,C-2-2-2,T,F,D-64,R,D-2")
 
     if args.show_one:
         global FPS
@@ -323,8 +324,18 @@ def getRandomPipe(score):
     pipeHeight = IMAGES['pipe'][0].get_height()
     pipeX = SCREENWIDTH + 10
 
-    upper_pipeY = gapY - pipeHeight if score > UP_PIPE_LIMIT else -pipeHeight
-    lower_pipeY = gapY + PIPEGAPSIZE if score > DOWN_PIPE_LIMIT else SCREENHEIGHT
+    upper_pipeY = gapY - pipeHeight if score > BOTH_PIPES_LIMIT else -pipeHeight
+    lower_pipeY = gapY + PIPEGAPSIZE if score > BOTH_PIPES_LIMIT else SCREENHEIGHT
+
+    if DOWN_PIPE_LIMIT < UP_PIPE_LIMIT:
+        if score > UP_PIPE_LIMIT:
+            upper_pipeY = gapY - pipeHeight
+
+        elif score > DOWN_PIPE_LIMIT:
+            lower_pipeY = gapY + PIPEGAPSIZE
+    else:
+        print("Lazy Programmer Exception")
+        exit(0)
 
     return [
         {'x': pipeX, 'y': upper_pipeY},  # upper pipe
