@@ -12,17 +12,17 @@ from pygame.locals import *
 
 POP_SIZE = 100
 GENS = 100
-ELITE_SIZE = 10
+ELITE_SIZE = 30
 TOURNAMENT_SIZE = 5
 CROSS_OVER_PROB = 0.5
-MUT_PROB = 0.9
+MUT_PROB = 0.8
 MUT_PER_BIT = 0.01
 
 FPS = 500
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
-PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
+PIPEGAPSIZE = 500  # gap between upper and lower part of pipe
 BASEY = SCREENHEIGHT * 0.79
 # image, sound and hitmask  dicts
 IMAGES, SOUNDS, HITMASKS = {}, {}, {}
@@ -44,7 +44,7 @@ BACKGROUNDS_LIST = (
 
 # list of pipes
 PIPES_LIST = (
-    'assets/sprites/pipe-red.png',
+    'assets/sprites/block-green.png',
 )
 
 
@@ -76,7 +76,7 @@ class bird:
 
         # check for crash here
         crashTest = checkCrash(self, upperPipes, lowerPipes)
-        if crashTest[0]:
+        if crashTest[0] or score >= 1000:
             self.active = False
             self.score = score
             return False
@@ -158,11 +158,10 @@ def main():
         ))
 
     # select random pipe sprites
-    pipeindex = random.randint(0, len(PIPES_LIST) - 1)
     IMAGES['pipe'] = (
         pygame.transform.rotate(
-            pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(), 180),
-        pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(),
+            pygame.image.load(PIPES_LIST[0]).convert_alpha(), 180),
+        pygame.image.load(PIPES_LIST[0]).convert_alpha(),
     )
 
     # hismask for pipes
@@ -180,11 +179,9 @@ def main():
 
     startx, starty = int(SCREENWIDTH * 0.2), int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
 
-    generation = 0
-
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-16-1,T,C-2-16-2,T,P-2-2,C-2-8-2,T,F,D-64,R,D-2")
+    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-4-1,T,C-2-4-2,T,P-2-2,C-2-4-2,T,F,D-64,R,D-2")
 
     if args.show_one:
         global FPS
@@ -202,18 +199,18 @@ def main():
         else:
             population = np.random.uniform(-1, 1, (POP_SIZE, net.weight_size)).reshape((POP_SIZE, net.weight_size))
 
-        while True:
+        for generation in range(GENS):
             fitness = []
             for i in range(0, POP_SIZE):
                 b = bird(id=i, x=startx, y=starty, images=player_img[0])
                 mainGame([b], generation, net, population[i])
                 fitness.append(b.score)
             population = evolve(population, np.array(fitness))
-            generation += 1
             np.savetxt(args.save_folder + "/gen_" + str(generation), evolve.elite)
             np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
 def mainGame(birds, generation, network, weights):
+    random.seed(42)
     score = loopIter = 0
     playerIndexGen = birds[0].indexGen
 
@@ -222,18 +219,18 @@ def mainGame(birds, generation, network, weights):
 
     # get 2 new pipes to add to upperPipes lowerPipes list
     newPipe1 = getRandomPipe()
-    newPipe2 = getRandomPipe()
+    #newPipe2 = getRandomPipe()
 
     # list of upper pipes
     upperPipes = [
-        {'x': SCREENWIDTH + 200, 'y': newPipe1[0]['y']},
-        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
+        {'x': SCREENWIDTH, 'y': newPipe1[0]['y']},
+     #   {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
     ]
 
     # list of lowerpipe
     lowerPipes = [
-        {'x': SCREENWIDTH + 200, 'y': newPipe1[1]['y']},
-        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
+        {'x': SCREENWIDTH, 'y': newPipe1[1]['y']},
+       # {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
     ]
 
     pipeVelX = -4
@@ -312,11 +309,12 @@ def playerShm(playerShm):
 
 
 def getRandomPipe():
+    pipeHeight = IMAGES['pipe'][0].get_height()
     """returns a randomly generated pipe"""
     # y of gap between upper and lower pipe
-    gapY = random.randrange(0, int(BASEY * 0.6 - PIPEGAPSIZE))
-    gapY += int(BASEY * 0.2)
-    pipeHeight = IMAGES['pipe'][0].get_height()
+    gapY = random.randrange(0+pipeHeight, int(BASEY))
+    #gapY += int(BASEY * 0.2)
+
     pipeX = SCREENWIDTH + 10
 
     return [
