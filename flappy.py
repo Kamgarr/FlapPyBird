@@ -233,13 +233,6 @@ def mainGame(birds, generation, network, weights, learning = True):
     upperPipes.append({'x': SCREENWIDTH, 'y': newPipe1[0]['y']})
     lowerPipes.append({'x': SCREENWIDTH, 'y': newPipe1[1]['y']})
 
-    if not True:#not learning:
-        newPipe2 = getRandomPipe()
-        upperPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']})
-        lowerPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']})
-
-
-
     pipeVelX = -4
 
     active_birds = len(birds)
