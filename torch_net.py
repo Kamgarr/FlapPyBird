@@ -118,6 +118,7 @@ class network:
             self.weight_size += layer.weight_size
             last_shape = layer.out_shape
             self.layers.append(layer)
+        print("Weight parameters: ", self.weight_size)
 
     def __call__(self, input, weights):
         weight_i = 0

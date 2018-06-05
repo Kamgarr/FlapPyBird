@@ -40,7 +40,7 @@ PLAYERS_LIST = (
 
 # list of backgrounds
 BACKGROUNDS_LIST = (
-    'assets/sprites/background-white.png',
+    'assets/sprites/background-window.png',
 )
 
 # list of pipes
@@ -184,13 +184,13 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, VIEWHEIGHT], "C-3-4-2,T,C-2-4-2,T,P-2-2,C-2-4-2,T,F,D-64,R,D-2")
+    net = network([1, 1, SCREENWIDTH, VIEWHEIGHT], "C-3-4-2,T,C-2-4-2,T,P-2-2,T,F,D-2")
 
     if args.show_one:
         global FPS
         FPS = 30
         b = bird(id=i, x=startx, y=starty, images=player_img[0])
-        mainGame([b], 0, net, np.loadtxt(args.show_one))
+        mainGame([b], 0, net, np.loadtxt(args.show_one), False)
     else:
         # create population of weights
         evolve = evolution(MUT_PROB, MUT_PER_BIT, CROSS_OVER_PROB, ELITE_SIZE, TOURNAMENT_SIZE)
@@ -219,26 +219,26 @@ def main():
             np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
 
-def mainGame(birds, generation, network, weights):
-    score = loopIter = 0
-    playerIndexGen = birds[0].indexGen
-    random.seed(40)
-
-    # get 2 new pipes to add to upperPipes lowerPipes list
-    newPipe1 = getRandomPipe()
-    # newPipe2 = getRandomPipe()
+def mainGame(birds, generation, network, weights, learning = True):
+    score = 0
+    if not learning:
+        random.seed(40)
 
     # list of upper pipes
-    upperPipes = [
-        {'x': SCREENWIDTH, 'y': newPipe1[0]['y']},
-        #   {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
-    ]
-
+    upperPipes = []
     # list of lowerpipe
-    lowerPipes = [
-        {'x': SCREENWIDTH, 'y': newPipe1[1]['y']},
-        # {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
-    ]
+    lowerPipes = []
+
+    newPipe1 = getRandomPipe()
+    upperPipes.append({'x': SCREENWIDTH, 'y': newPipe1[0]['y']})
+    lowerPipes.append({'x': SCREENWIDTH, 'y': newPipe1[1]['y']})
+
+    if not learning:
+        newPipe2 = getRandomPipe()
+        upperPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']})
+        lowerPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']})
+
+
 
     pipeVelX = -4
 
@@ -286,7 +286,7 @@ def mainGame(birds, generation, network, weights):
             lowerPipes.pop(0)
 
         # draw sprites
-        SCREEN.blit(IMAGES['background'], (0, 0))
+        SCREEN.blit(IMAGES['background'], (0, -512+bird.y))
 
         for uPipe, lPipe in zip(upperPipes, lowerPipes):
             SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
