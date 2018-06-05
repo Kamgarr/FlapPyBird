@@ -9,7 +9,6 @@ import argparse
 import pygame
 from pygame.locals import *
 
-
 POP_SIZE = 100
 GENS = 100
 ELITE_SIZE = 30
@@ -21,9 +20,11 @@ MUT_PER_BIT = 0.01
 FPS = 500
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
+VIEWHEIGHT = 144
 # amount by which base can maximum shift to left
 PIPEGAPSIZE = 500  # gap between upper and lower part of pipe
 BASEY = SCREENHEIGHT * 0.79
+TOPY = -100
 # image, sound and hitmask  dicts
 IMAGES, SOUNDS, HITMASKS = {}, {}, {}
 
@@ -76,7 +77,7 @@ class bird:
 
         # check for crash here
         crashTest = checkCrash(self, upperPipes, lowerPipes)
-        if crashTest[0] or score >= 1000:
+        if crashTest[0] or score >= 10000:
             self.active = False
             self.score = score
             return False
@@ -109,8 +110,9 @@ class bird:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save_folder", default="weights", type=str, help="Save folder.")
+    parser.add_argument("--save_folder", default=None, type=str, help="Save folder.")
     parser.add_argument("--resume", default=None, type=str, help="Weight file")
+    parser.add_argument("--change_training", default=None, type=int, help="Generation when training of conv layers stops")
     parser.add_argument("--show_one", default=None, type=str, help="Weight file")
     args = parser.parse_args()
 
@@ -138,6 +140,7 @@ def main():
     IMAGES['message'] = pygame.image.load('assets/sprites/message.png').convert_alpha()
     # base (ground) sprite
     IMAGES['base'] = pygame.image.load('assets/sprites/base_green.png').convert_alpha()
+    IMAGES['top'] = pygame.image.load('assets/sprites/top_blue.png').convert_alpha()
 
     IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[0]).convert()
 
@@ -181,7 +184,7 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, SCREENHEIGHT], "P-4-4,C-2-4-1,T,C-2-4-2,T,P-2-2,C-2-4-2,T,F,D-64,R,D-2")
+    net = network([1, 1, SCREENWIDTH, VIEWHEIGHT], "C-3-4-2,T,C-2-4-2,T,P-2-2,C-2-4-2,T,F,D-64,R,D-2")
 
     if args.show_one:
         global FPS
@@ -194,43 +197,47 @@ def main():
 
         if args.resume:
             elite = np.loadtxt(args.resume)
-            new = np.random.uniform(-1, 1, (POP_SIZE-ELITE_SIZE, net.weight_size)).reshape((POP_SIZE-ELITE_SIZE, net.weight_size))
+            new = np.random.uniform(-1, 1, (POP_SIZE - ELITE_SIZE, net.weight_size)).reshape(
+                (POP_SIZE - ELITE_SIZE, net.weight_size))
             population = np.append(elite, new, axis=0)
         else:
             population = np.random.uniform(-1, 1, (POP_SIZE, net.weight_size)).reshape((POP_SIZE, net.weight_size))
 
         for generation in range(GENS):
+            #evaluate population
             fitness = []
             for i in range(0, POP_SIZE):
                 b = bird(id=i, x=startx, y=starty, images=player_img[0])
                 mainGame([b], generation, net, population[i])
                 fitness.append(b.score)
-            population = evolve(population, np.array(fitness))
+            #generate new population
+            if args.change_training and args.change_training > generation:
+                population = evolve(population, np.array(fitness), net.weight_size - net.dense_weight_size + 1)
+            else:
+                population = evolve(population, np.array(fitness))
             np.savetxt(args.save_folder + "/gen_" + str(generation), evolve.elite)
             np.savetxt(args.save_folder + "/gen_" + str(generation) + "_best", evolve.best)
 
+
 def mainGame(birds, generation, network, weights):
-    random.seed(42)
     score = loopIter = 0
     playerIndexGen = birds[0].indexGen
-
-    basex = 0
-    baseShift = IMAGES['base'].get_width() - IMAGES['background'].get_width()
+    random.seed(40)
 
     # get 2 new pipes to add to upperPipes lowerPipes list
     newPipe1 = getRandomPipe()
-    #newPipe2 = getRandomPipe()
+    # newPipe2 = getRandomPipe()
 
     # list of upper pipes
     upperPipes = [
         {'x': SCREENWIDTH, 'y': newPipe1[0]['y']},
-     #   {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
+        #   {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
     ]
 
     # list of lowerpipe
     lowerPipes = [
         {'x': SCREENWIDTH, 'y': newPipe1[1]['y']},
-       # {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
+        # {'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
     ]
 
     pipeVelX = -4
@@ -254,7 +261,9 @@ def mainGame(birds, generation, network, weights):
             # TODO call neural net here
             rgb = np.array(SCREEN.get_view('3'))
             gray_scale = np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
-            jump = network(np.expand_dims(gray_scale, 0), weights)
+            top = max(0, int(bird.y - VIEWHEIGHT / 2))
+            view = gray_scale[:, top:top + VIEWHEIGHT]
+            jump = network(np.expand_dims(view, 0), weights)
 
             if not bird.update(score, upperPipes, lowerPipes, jump):
                 active_birds -= 1
@@ -283,8 +292,8 @@ def mainGame(birds, generation, network, weights):
             SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
             SCREEN.blit(IMAGES['pipe'][1], (lPipe['x'], lPipe['y']))
 
-        basex = -((-basex + 100) % baseShift)
-        SCREEN.blit(IMAGES['base'], (basex, BASEY))
+        SCREEN.blit(IMAGES['base'], (0, BASEY))
+        SCREEN.blit(IMAGES['top'], (0, TOPY))
         # print score so player overlaps the score
         # showScore(score)
         pygame.display.set_caption("Flappy Bird, score: " + str(score))
@@ -312,8 +321,8 @@ def getRandomPipe():
     pipeHeight = IMAGES['pipe'][0].get_height()
     """returns a randomly generated pipe"""
     # y of gap between upper and lower pipe
-    gapY = random.randrange(0+pipeHeight, int(BASEY))
-    #gapY += int(BASEY * 0.2)
+    gapY = random.randrange(pipeHeight, int(BASEY))
+    # gapY += int(BASEY * 0.2)
 
     pipeX = SCREENWIDTH + 10
 

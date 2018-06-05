@@ -11,7 +11,7 @@ class evolution:
         self.elite = None
         self.best = None
 
-    def __call__(self, last_gen, fitness):
+    def __call__(self, last_gen, fitness, beginning=0):
         new_gen = last_gen.copy()
         o_indices = np.array(fitness).argsort()[-self.elite_size:]
         new_gen[range(self.elite_size), :] = last_gen[o_indices, :]
@@ -28,27 +28,27 @@ class evolution:
             o_1, o_2 = last_gen[o_indices, :]
 
             # Crossover
-            o_1, o_2 = self._crossover(o_1, o_2)
+            o_1, o_2 = self._crossover(o_1, o_2, beginning)
 
             # Mutation
-            o_1 = self._mutate(o_1)
-            o_2 = self._mutate(o_2)
+            o_1 = self._mutate(o_1, beginning)
+            o_2 = self._mutate(o_2, beginning)
 
             new_gen[i, :] = o_1
             new_gen[i + 1, :] = o_2
 
         return new_gen
 
-    def _crossover(self, first, second):
+    def _crossover(self, first, second, beginning):
         if np.random.rand() < self.cross_prob:
-            index = np.random.randint(0, len(first))
+            index = np.random.randint(beginning, len(first))
             first[index:], second[index:] = second[index:], first[index:]
 
         return first, second
 
-    def _mutate(self, element):
+    def _mutate(self, element, beginning):
         if np.random.rand() < self.mut_prob:
-            for i in range(len(element)):
+            for i in range(beginning, len(element)):
                 if np.random.rand() < self.mut_per_bit:
                     element[i] = (np.random.rand() * 2) - 1
         return element

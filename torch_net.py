@@ -96,6 +96,7 @@ class network:
     def __init__(self, input_shape, parameters):
         layer_args = [x.split('-') for x in parameters.split(',')]
         self.weight_size = 0
+        self.dense_weight_size = 0
         last_shape = input_shape
 
         self.layers = []
@@ -106,6 +107,7 @@ class network:
                 layer = maxPool2d(last_shape, int(layer_args[i][1]), int(layer_args[i][2]))  # kernel, stride
             elif layer_args[i][0] == 'D':
                 layer = dense(last_shape, int(layer_args[i][1]))
+                self.dense_weight_size += layer.weight_size
             elif layer_args[i][0] == 'R':
                 layer = relu(last_shape)
             elif layer_args[i][0] == 'T':
