@@ -184,11 +184,11 @@ def main():
 
     # TODO Neural net and evolution definition
     # create network
-    net = network([1, 1, SCREENWIDTH, VIEWHEIGHT], "C-3-4-2,T,C-2-4-2,T,P-2-2,T,F,D-2")
+    net = network([1, 1, SCREENWIDTH, VIEWHEIGHT], "C-3-4-2,T,C-2-4-2,T,P-2-2,C-2-4-2,T,F,D-64,R,D-2")
 
     if args.show_one:
         global FPS
-        FPS = 30
+        FPS = 50
         b = bird(id=i, x=startx, y=starty, images=player_img[0])
         mainGame([b], 0, net, np.loadtxt(args.show_one), False)
     else:
@@ -222,7 +222,7 @@ def main():
 def mainGame(birds, generation, network, weights, learning = True):
     score = 0
     if not learning:
-        random.seed(40)
+        random.seed(12)
 
     # list of upper pipes
     upperPipes = []
@@ -233,7 +233,7 @@ def mainGame(birds, generation, network, weights, learning = True):
     upperPipes.append({'x': SCREENWIDTH, 'y': newPipe1[0]['y']})
     lowerPipes.append({'x': SCREENWIDTH, 'y': newPipe1[1]['y']})
 
-    if not learning:
+    if not True:#not learning:
         newPipe2 = getRandomPipe()
         upperPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']})
         lowerPipes.append({'x': SCREENWIDTH + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']})
